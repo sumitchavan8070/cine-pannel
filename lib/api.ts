@@ -3,17 +3,13 @@
  * Base URL is always taken from SERVER_URL
  */
 
-const getApiBaseUrl = (): string => {
-  const serverUrl = process.env.SERVER_URL
-  if (!serverUrl) {
-    throw new Error("SERVER_URL is not set. Add it to your .env file.")
-  }
-  return serverUrl
-}
-
 // Normalize the base URL (remove trailing slash, ensure it ends with /api if needed)
 const normalizeBaseUrl = (url: string): string => {
   let normalized = url.trim()
+
+  if (!normalized) {
+    return ""
+  }
   
   // If it's a relative URL, return as is
   if (normalized.startsWith("/")) {
@@ -40,7 +36,8 @@ const normalizeBaseUrl = (url: string): string => {
   return normalized
 }
 
-const API_BASE_URL = normalizeBaseUrl(getApiBaseUrl())
+// Always use SERVER_URL — do not throw at module load (breaks `next build` page collection)
+const API_BASE_URL = normalizeBaseUrl(process.env.SERVER_URL || "")
 
 /**
  * Build full URL from endpoint
@@ -48,6 +45,10 @@ const API_BASE_URL = normalizeBaseUrl(getApiBaseUrl())
  * @returns Full URL
  */
 const buildUrl = (endpoint: string): string => {
+  if (!API_BASE_URL) {
+    throw new Error("SERVER_URL is not set. Add it to your .env / deploy environment.")
+  }
+
   // Remove leading slash if present
   const cleanEndpoint = endpoint.startsWith("/") ? endpoint.slice(1) : endpoint
   
